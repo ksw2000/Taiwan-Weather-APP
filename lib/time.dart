@@ -3,9 +3,9 @@
 import 'package:sprintf/sprintf.dart';
 String cwbDateFormatter(String date){
   var t = DateTime.parse(date);
-  var ret = sprintf('%4i', [t.year]);
+  var ret = sprintf('%02i', [t.month]);
   ret += '/';
-  ret += sprintf('%02i', [t.month]);
+  ret += sprintf('%02i', [t.day]);
   ret += ' ';
   ret += sprintf('%02i', [t.hour]);
   ret += ':';
