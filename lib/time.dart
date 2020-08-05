@@ -1,0 +1,24 @@
+// convert YYYY-MM-DD hh:mm:ss
+// to MM/DD hh:mm
+import 'package:sprintf/sprintf.dart';
+String cwbDateFormatter(String date){
+  var t = DateTime.parse(date);
+  var ret = sprintf('%4i', [t.year]);
+  ret += '/';
+  ret += sprintf('%02i', [t.month]);
+  ret += ' ';
+  ret += sprintf('%02i', [t.hour]);
+  ret += ':';
+  ret += sprintf('%02i', [t.minute]);
+  return ret;
+}
+
+bool isNight([String t]){
+  int hour;
+  hour = t == null? new DateTime.now().hour : DateTime.parse(t).hour;
+
+  if(hour < 6 || hour >= 18){
+    return true;
+  }
+  return false;
+}

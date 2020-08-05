@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:weather_icons/weather_icons.dart';
 import './weather.dart' as weather;
+import './time.dart' as time;
 
 void main() {
   runApp(MyApp());
@@ -31,13 +32,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  _MyHomePageState(){
+  _MyHomePageState() {
     refreshWeather();
     int counter = 0;
     // Update every 1min for current weather
     Timer.periodic(Duration(seconds: 60), (timer) {
       // Update every 30 min for forecast weather
-      if(counter % 30 == 0){
+      if (counter % 30 == 0) {
         refreshForecastWeather();
       }
       refreshCurrentWeather();
@@ -47,6 +48,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  List<String> startTime = ['', '', ''];
+  List<String> endTime = ['', '', ''];
   List<String> wx = ['', '', ''];
   List<String> minT = ['0', '0', '0'];
   List<String> maxT = ['0', '0', '0'];
@@ -62,9 +65,11 @@ class _MyHomePageState extends State<MyHomePage> {
       if (map != null) {
         setState(() {
           for (var i = 0; i < 3; i++) {
+            startTime[i] = time.cwbDateFormatter(map[i]['startTime']);
+            endTime[i] = time.cwbDateFormatter(map[i]['endTime']);
             wx[i] = map[i]['Wx']['parameterName'];
             weatherCode[i] =
-                weather.cwbWxCodeToIconCode(map[i]['Wx']['parameterValue']);
+                weather.cwbWxCodeToIconCode(map[i]['Wx']['parameterValue'], map[i]['startTime']);
             minT[i] = map[i]['MinT']['parameterName'];
             maxT[i] = map[i]['MaxT']['parameterName'];
             pop[i] = map[i]['PoP']['parameterName'];
@@ -84,19 +89,58 @@ class _MyHomePageState extends State<MyHomePage> {
           curTEMP = map['TEMP'];
           curHUMD = map['HUMD'];
           curWeather = map['Weather'];
+          curWeather = curWeather == '-99'? '-' : curWeather;
           curWeatherCode = weather.cwdCurrentWeatherToIconCode(curWeather);
         });
       }
     });
   }
 
-  void refreshWeather(){
+  void refreshWeather() {
     refreshCurrentWeather();
     refreshForecastWeather();
   }
 
   @override
   Widget build(BuildContext context) {
+    var forecastChildren = <Widget>[];
+    for (var i = 0; i < 3; i++) {
+      forecastChildren.add(Text(
+        '${startTime[i]} ~ ${endTime[i]}',
+        style: TextStyle(fontSize: 21),
+      ));
+      forecastChildren.add(Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Column(
+            children: [
+              BoxedIcon(
+                WeatherIcons.fromString(weatherCode[i]),
+                size: 42,
+              ),
+              /*
+              Text(
+                "${wx[i]}",
+                style: TextStyle(fontSize: 21),
+              ),*/
+            ],
+          ),
+          Column(
+            children: [
+              Text(
+                "${minT[i]}°C ~ ${maxT[i]}°C",
+                style: TextStyle(fontSize: 21),
+              ),
+              Text(
+                "降雨率：${pop[i]}%",
+                style: TextStyle(fontSize: 21),
+              )
+            ],
+          ),
+        ],
+      ));
+    }
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -104,16 +148,14 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: refreshWeather, child: Icon(Icons.refresh)),
           appBar: AppBar(
             title: Text(widget.title),
-            bottom: TabBar(
-              tabs: [
-                Tab(
-                  text: '現在',
-                ),
-                Tab(
-                  text: '預報',
-                )
-              ]
-            ),
+            bottom: TabBar(tabs: [
+              Tab(
+                text: '現在',
+              ),
+              Tab(
+                text: '預報',
+              )
+            ]),
           ),
           body: TabBarView(children: [
             Column(
@@ -137,37 +179,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
-            Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Column(
-                    children: [
-                      BoxedIcon(
-                        WeatherIcons.fromString(weatherCode[0]),
-                        size: 21,
-                      ),
-                      Text(
-                        "${wx[0]}",
-                        style: TextStyle(fontSize: 21),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        "${minT[0]}°C ~ ${maxT[0]}°C",
-                        style: TextStyle(fontSize: 21),
-                      ),
-                      Text(
-                        "降雨率：${pop[0]}%",
-                        style: TextStyle(fontSize: 21),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            ])
+            Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: forecastChildren)
           ]),
           drawer: Drawer(
               child: ListView(children: <Widget>[
@@ -182,4 +196,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
