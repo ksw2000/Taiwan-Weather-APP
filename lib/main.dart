@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './index.dart';
+import './setting.dart';
 
 void main() {
   runApp(MyApp());
@@ -32,6 +33,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final pages = {
+    "indexPage": IndexPage(),
+    "settingPage": SettingPage()
+  };
+
+  var page;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,8 +47,22 @@ class _MyHomePageState extends State<MyHomePage> {
           child: ListView(children: <Widget>[
             ListTile(
               leading: Icon(Icons.favorite),
+              title: Text('首頁'),
+              onTap: () {
+                setState(() {
+                  page = pages["indexPage"];
+                });
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.favorite),
               title: Text('設定'),
               onTap: () {
+                setState(() {
+                  print("觸發");
+                  page = pages["settingPage"];
+                });
                 Navigator.pop(context);
               },
             ),
@@ -57,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
           )
         ]),
       ),
-      body: IndexPage(),
+      body: page ?? pages["indexPage"],
     );
   }
 }

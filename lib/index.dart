@@ -94,7 +94,7 @@ class _MyIndexPageState extends State<MyIndexPage>{
     });
   }
 
-  dynamic forecastChildren(BuildContext context){
+  List forecastChildren(BuildContext context){
     var forecastChildrenList = <Widget>[];
     for (var i = 0; i < 3; i++) {
       forecastChildrenList.add(
