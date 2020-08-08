@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import './location.dart' as loc;
 
 class SettingPage extends StatelessWidget{
   @override
@@ -16,12 +17,33 @@ class MySettingPage extends StatefulWidget {
 }
 
 class _MySettingPage extends State<MySettingPage>{
+  _MySettingPage(){
+    //TODO
+    //Test GPS
+
+  }
+
   @override
   Widget build(BuildContext context) {
+    loc.getPosition().then((position){
+      loc.getStationWithGPS(position.latitude, position.longitude).then((city){
+        print(city);
+      });
+    });
+
     return Center(
-      child: Text(
-        'Setting page'
-      ),
+      child: ListView(
+        children: <Widget>[
+          ListTile(
+            leading: Icon(Icons.location_on),
+            title: Text('重新定位')
+          ),
+          ListTile(
+              leading: Icon(Icons.location_searching),
+              title: Text('選擇地區')
+          ),
+        ]
+      )
     );
   }
 }

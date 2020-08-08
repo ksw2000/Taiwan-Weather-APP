@@ -56,8 +56,6 @@ var _cwbWxCodeToIconCode = {
 };
 
 String cwbWxCodeToIconCode(wx, [String t]) {
-  print('$t');
-  print('${time.isNight(t)}');
   if(time.isNight(t)){
     return _cwbWxCodeToIconCode[wx].replaceAll('day', 'night');
   }

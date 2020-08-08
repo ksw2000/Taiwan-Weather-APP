@@ -38,7 +38,23 @@ class _MyHomePageState extends State<MyHomePage> {
     "settingPage": SettingPage()
   };
 
-  var page;
+  final tabBars = {
+    "indexPage" : TabBar(tabs: [
+      Tab(
+        text: '現在',
+      ),
+      Tab(
+        text: '預報',
+      )
+    ]),
+    "settingPage" : null
+  };
+
+  var page, tabBar;
+  _MyHomePageState(){
+    page = pages['indexPage'];
+    tabBar = tabBars['indexPage'];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,22 +62,23 @@ class _MyHomePageState extends State<MyHomePage> {
       drawer: Drawer(
           child: ListView(children: <Widget>[
             ListTile(
-              leading: Icon(Icons.favorite),
+              leading: Icon(Icons.home),
               title: Text('首頁'),
               onTap: () {
                 setState(() {
                   page = pages["indexPage"];
+                  tabBar = tabBars["indexPage"];
                 });
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: Icon(Icons.favorite),
+              leading: Icon(Icons.settings),
               title: Text('設定'),
               onTap: () {
                 setState(() {
-                  print("觸發");
                   page = pages["settingPage"];
+                  tabBar = tabBars["settingPage"];
                 });
                 Navigator.pop(context);
               },
@@ -70,16 +87,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       appBar: AppBar(
         title: Text(widget.title),
-        bottom: TabBar(tabs: [
-          Tab(
-            text: '現在',
-          ),
-          Tab(
-            text: '預報',
-          )
-        ]),
+        bottom: tabBar,
       ),
-      body: page ?? pages["indexPage"],
+      body: page
     );
   }
 }

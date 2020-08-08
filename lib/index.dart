@@ -27,14 +27,16 @@ class _MyIndexPageState extends State<MyIndexPage>{
     int counter = 0;
     // Update every 1min for current weather
     Timer.periodic(Duration(seconds: 60), (timer) {
-      // Update every 30 min for forecast weather
-      if (counter % 30 == 0) {
-        _refreshForecastWeather();
-      }
-      _refreshCurrentWeather();
-      print('refresh');
+      if(this.mounted){
+        // Update every 30 min for forecast weather
+        if (counter % 30 == 0) {
+          _refreshForecastWeather();
+        }
+        _refreshCurrentWeather();
+        print('refresh');
 
-      counter++;
+        counter++;
+      }
     });
   }
 
