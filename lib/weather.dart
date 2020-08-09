@@ -1,5 +1,5 @@
-import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
+import 'package:http/http.dart' as http;
 import './time.dart' as time;
 
 var _authorization = 'CWB-4265762E-BC4C-49FE-901B-EABE576583F6';
@@ -171,22 +171,27 @@ Future<dynamic> getForecastWeather(city) async {
   return null;
 }
 
-Future<dynamic> getCurrentWeather(city) async {
+Future<dynamic> getCurrentWeather(station) async {
   var url =
-      "https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${_authorization}&locationName=${city}";
+      "https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${_authorization}&locationName=${station}";
   var response = await http.get(url);
+  print(url);
   if (response.statusCode == 200) {
     var jsonResponse = convert.jsonDecode(response.body);
-    if (jsonResponse["success"] == "true") {
-      var weatherElement =
-          jsonResponse["records"]["location"][0]["weatherElement"];
-      var len = weatherElement.length;
-      var ret = new Map();
-      for (var i = 0; i < len; i++) {
-        ret[weatherElement[i]["elementName"]] =
-            weatherElement[i]["elementValue"] as String;
+    try{
+      if (jsonResponse["success"] == "true") {
+        var weatherElement =
+        jsonResponse["records"]["location"][0]["weatherElement"];
+        var len = weatherElement.length;
+        var ret = new Map();
+        for (var i = 0; i < len; i++) {
+          ret[weatherElement[i]["elementName"]] =
+          weatherElement[i]["elementValue"] as String;
+        }
+        return ret;
       }
-      return ret;
+    }catch(e){
+      return null;
     }
   }
   return null;

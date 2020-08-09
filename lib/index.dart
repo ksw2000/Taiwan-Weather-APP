@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:weather_icons/weather_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sprintf/sprintf.dart';
-import './weather.dart' as weather;
+import './location.dart' as loc;
 import './time.dart' as time;
+import './weather.dart' as weather;
 
 class IndexPage extends StatelessWidget{
   @override
@@ -21,22 +23,44 @@ class MyIndexPage extends StatefulWidget {
 }
 
 class _MyIndexPageState extends State<MyIndexPage>{
-  _MyIndexPageState() {
-    _refreshForecastWeather();
-    _refreshCurrentWeather();
-    int counter = 0;
-    // Update every 1min for current weather
-    Timer.periodic(Duration(seconds: 60), (timer) {
-      if(this.mounted){
-        // Update every 30 min for forecast weather
-        if (counter % 30 == 0) {
-          _refreshForecastWeather();
-        }
-        _refreshCurrentWeather();
-        print('refresh');
+  String currentCity;
+  String currentStation;
 
-        counter++;
+  _MyIndexPageState() {
+    SharedPreferences.getInstance().then((prefs){
+      currentCity = prefs.getString("city");
+      currentStation = prefs.getString("station");
+      if(currentCity == '' || currentStation == ''){
+        loc.getLastKnownPosition().then((position){
+          loc.getStationWithGPS(position.latitude, position.longitude).then((station){
+            currentStation = station;
+            _refreshCurrentWeather();
+          });
+
+          loc.getCityWithGPS(position.latitude, position.longitude).then((city){
+            currentCity = city;
+            _refreshForecastWeather();
+          });
+        });
+      }else{
+        _refreshCurrentWeather();
+        _refreshForecastWeather();
       }
+
+      int counter = 0;
+      // Update every 1min for current weather
+      Timer.periodic(Duration(seconds: 60), (timer) {
+        if(this.mounted){
+          // Update every 30 min for forecast weather
+          if (counter % 30 == 0) {
+            _refreshForecastWeather();
+          }
+          _refreshCurrentWeather();
+          print('refresh');
+
+          counter++;
+        }
+      });
     });
   }
 
@@ -53,7 +77,7 @@ class _MyIndexPageState extends State<MyIndexPage>{
   String curWeatherCode = 'wi-na';
 
   Future<dynamic> _refreshForecastWeather() async {
-    return weather.getForecastWeather('臺中市').then((map) {
+    return weather.getForecastWeather(currentCity).then((map) {
       if (map != null) {
         setState(() {
           for (var i = 0; i < 3; i++) {
@@ -75,7 +99,7 @@ class _MyIndexPageState extends State<MyIndexPage>{
   }
 
   Future<dynamic> _refreshCurrentWeather() async {
-    return weather.getCurrentWeather('臺中').then((map) {
+    return weather.getCurrentWeather(currentStation).then((map) {
       if (map != null) {
         setState(() {
           curTEMP = sprintf("%.1f", [double.parse(map['TEMP'])]);
