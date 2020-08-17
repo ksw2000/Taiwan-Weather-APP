@@ -25,40 +25,28 @@ class MyIndexPage extends StatefulWidget {
 class _MyIndexPageState extends State<MyIndexPage>{
   String currentCity;
   String currentStation;
-
+  bool isAutoRelocation;
   _MyIndexPageState() {
-    SharedPreferences.getInstance().then((prefs){
-      currentCity = prefs.getString("city");
-      currentStation = prefs.getString("station");
-      if(currentCity == '' || currentStation == ''){
-        loc.getLastKnownPosition().then((position){
-          loc.getStationWithGPS(position.latitude, position.longitude).then((station){
-            currentStation = station;
-            _refreshCurrentWeather();
-          });
-
-          loc.getCityWithGPS(position.latitude, position.longitude).then((city){
-            currentCity = city;
-            _refreshForecastWeather();
-          });
-        });
-      }else{
-        _refreshCurrentWeather();
-        _refreshForecastWeather();
-      }
+    // 用用戶允許自動定位就刷新定位
+    _refreshCurrentPositionIfUserAllow().then((_){
+      print('$currentCity $currentStation');
+      _refreshForecastWeather();
+      _refreshCurrentWeather();
 
       int counter = 0;
       // Update every 1min for current weather
       Timer.periodic(Duration(seconds: 60), (timer) {
         if(this.mounted){
-          // Update every 30 min for forecast weather
-          if (counter % 30 == 0) {
-            _refreshForecastWeather();
-          }
-          _refreshCurrentWeather();
-          print('refresh');
+          _refreshCurrentPositionIfUserAllow().then((_) {
+            // Update every 30 min for forecast weather
+            if (counter % 30 == 0) {
+              _refreshForecastWeather();
+            }
+            _refreshCurrentWeather();
+            print('refresh');
 
-          counter++;
+            counter++;
+          });
         }
       });
     });
@@ -75,6 +63,38 @@ class _MyIndexPageState extends State<MyIndexPage>{
   String curHUMD = '0';
   String curWeather = '';
   String curWeatherCode = 'wi-na';
+
+  Future<dynamic> _refreshCurrentPositionIfUserAllow() async{
+    bool yesOrNo =  await loc.isAutoRelocation();
+    isAutoRelocation = yesOrNo;
+
+    if (isAutoRelocation) {
+      // 無論如何更新 location 和 station
+      print("用戶開啟自動定位，無論如何更新 location 和 station");
+      var position = await loc.getPosition();
+      currentStation = await loc.getStationWithGPS(position.latitude, position.longitude);
+      currentCity = await loc.getCityWithGPS(position.latitude, position.longitude);
+    } else {
+      // 如果有上次的記錄就拿上次的記錄，若沒有則仍要求定位
+
+      print("用戶關閉自動定位，拿取上次記錄");
+      var prefs = await SharedPreferences.getInstance();
+      // 先拿上次的
+      currentCity = prefs.getString("city");
+      currentStation = prefs.getString("station");
+      // 如果沒有，就重新拿
+      if (currentCity == '' || currentStation == '') {
+        var position = await loc.getPosition();
+        if(currentCity == ''){
+          currentCity = await loc.getCityWithGPS(position.latitude, position.longitude);
+        }
+
+        if(currentStation == ''){
+          currentStation = await loc.getStationWithGPS(position.latitude, position.longitude);
+        }
+      }
+    }
+  }
 
   Future<dynamic> _refreshForecastWeather() async {
     return weather.getForecastWeather(currentCity).then((map) {

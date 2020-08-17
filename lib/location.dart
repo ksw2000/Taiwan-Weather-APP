@@ -20,7 +20,7 @@ Future<String> getStationWithGPS(double lat, double lon) async{
   var minDistance = double.maxFinite;
   var retStation = "";
 
-  await rootBundle.loadString('assets/json/city.json').then((rawData){
+  await rootBundle.loadString('assets/json/station.json').then((rawData){
    var data = jsonDecode(rawData);
 
     for(var i=0; i<data.length; i++){
@@ -55,4 +55,33 @@ Future<String> getCityWithGPS(double lat, double lon) async{
     return city;
   }
   return "";
+}
+
+Future<List> loadAllStation() async{
+  var ret = List();
+  await rootBundle.loadString('assets/json/station.json').then((rawData){
+    var data = jsonDecode(rawData);
+    for(var i=0; i<data.length; i++){
+      ret.add(data[i]['locationName']);
+    }
+  });
+  return ret;
+}
+
+Future<bool> isAutoRelocation() async{
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  // 預設是自動定位
+  return prefs.get("autoRelocation") ?? true;
+}
+
+Future<bool> toggleAutoRelocation() async{
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isAutoRelocation = prefs.get("autoRelocation") ?? true;
+  if(isAutoRelocation){
+    prefs.setBool("autoRelocation", false);
+    return false;
+  }
+
+  prefs.setBool("autoRelocation", true);
+  return true;
 }

@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       ),
       home: DefaultTabController(
         length: 2,
-        child: MyHomePage(title: '台中天氣'),
+        child: MyHomePage(title: '台灣天氣'),
       )
     );
   }
@@ -32,13 +32,16 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final pages = {
+class Pages{
+  dynamic page;
+  dynamic tabBar;
+  dynamic pages = {
     "indexPage": IndexPage(),
-    "settingPage": SettingPage()
+    "settingPage": SettingPage(),
+    "chooseStation": ChooseStation()
   };
 
-  final tabBars = {
+  dynamic tabBars = {
     "indexPage" : TabBar(tabs: [
       Tab(
         text: '現在',
@@ -47,13 +50,20 @@ class _MyHomePageState extends State<MyHomePage> {
         text: '預報',
       )
     ]),
-    "settingPage" : null
+    "settingPage" : null,
+    "chooseStation": null
   };
 
-  var page, tabBar;
+  void changePage(String pageName){
+    page = pages[pageName];
+    tabBar = tabBars[pageName];
+  }
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  Pages p = Pages();
   _MyHomePageState(){
-    page = pages['indexPage'];
-    tabBar = tabBars['indexPage'];
+    p.changePage('indexPage');
   }
 
   @override
@@ -66,8 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Text('首頁'),
               onTap: () {
                 setState(() {
-                  page = pages["indexPage"];
-                  tabBar = tabBars["indexPage"];
+                  p.changePage('indexPage');
                 });
                 Navigator.pop(context);
               },
@@ -77,8 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Text('設定'),
               onTap: () {
                 setState(() {
-                  page = pages["settingPage"];
-                  tabBar = tabBars["settingPage"];
+                  p.changePage('settingPage');
                 });
                 Navigator.pop(context);
               },
@@ -87,9 +95,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       appBar: AppBar(
         title: Text(widget.title),
-        bottom: tabBar,
+        bottom: p.tabBar,
       ),
-      body: page
+      body: p.page
     );
   }
 }
