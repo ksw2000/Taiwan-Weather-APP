@@ -56,13 +56,13 @@ var _cwbWxCodeToIconCode = {
 };
 
 String cwbWxCodeToIconCode(wx, [String t]) {
-  if(time.isNight(t)){
+  if (time.isNight(t)) {
     return _cwbWxCodeToIconCode[wx].replaceAll('day', 'night');
   }
   return _cwbWxCodeToIconCode[wx];
 }
 
-String cwdCurrentWeatherToIconCode(weather) {
+String cwdCurrentWeatherToIconCode(String weather) {
 /*
 * 晴、多雲、陰
 * x
@@ -148,12 +148,12 @@ String cwdCurrentWeatherToIconCode(weather) {
 
 Future<dynamic> getForecastWeather(city) async {
   var url =
-      "https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=${_authorization}&locationName=${city}";
+      "https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=$_authorization&locationName=$city";
   var response = await http.get(url);
   if (response.statusCode == 200) {
     var jsonResponse = convert.jsonDecode(response.body);
     if (jsonResponse["success"] == "true") {
-      var retList = new List();
+      var retList = [];
       var parameter = jsonResponse["records"]["location"][0]["weatherElement"];
       for (var j = 0; j < 3; j++) {
         var ret = new Map();
@@ -178,19 +178,19 @@ Future<dynamic> getCurrentWeather(station) async {
   print(url);
   if (response.statusCode == 200) {
     var jsonResponse = convert.jsonDecode(response.body);
-    try{
+    try {
       if (jsonResponse["success"] == "true") {
         var weatherElement =
-        jsonResponse["records"]["location"][0]["weatherElement"];
+            jsonResponse["records"]["location"][0]["weatherElement"];
         var len = weatherElement.length;
         var ret = new Map();
         for (var i = 0; i < len; i++) {
           ret[weatherElement[i]["elementName"]] =
-          weatherElement[i]["elementValue"] as String;
+              weatherElement[i]["elementValue"] as String;
         }
         return ret;
       }
-    }catch(e){
+    } catch (e) {
       return null;
     }
   }
