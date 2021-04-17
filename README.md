@@ -1,6 +1,6 @@
-# flutter_app
+# taiwan_weather
 
-A new Flutter application.
+Taiwan weather App
 
 ## Getting Started
 
