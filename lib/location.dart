@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import './err.dart';
 
 class Location {
   Location({this.city, this.station});
@@ -14,17 +15,33 @@ class Location {
 // 單點坐標回傳行政區
 // https://data.gov.tw/dataset/101898
 
-Future<Position> getLastKnownPosition() async {
-  return await Geolocator()
-      .getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
+Future<Position> _getPosition() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  // Test if location services are enabled.
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    return Future.error('Location services are disabled.');
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('請允許定位');
+    }
+
+    if (permission == LocationPermission.denied) {
+      return Future.error('請允許定位');
+    }
+  }
+  return Future.value(await Geolocator.getCurrentPosition());
 }
 
-Future<Position> getPosition() async {
-  return await Geolocator()
-      .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-}
-
-Future<String> getStationWithGPS(double lat, double lon) async {
+Future<String> getStationWithGPS(Position position) async {
+  var lon = position.longitude;
+  var lat = position.latitude;
   var minDistance = double.maxFinite;
   var ret = "";
 
@@ -47,68 +64,55 @@ Future<String> getStationWithGPS(double lat, double lon) async {
   return ret;
 }
 
-Future<String> getCityWithGPS(double lat, double lon) async {
-  print('https://api.nlsc.gov.tw/other/TownVillagePointQuery/$lon/$lat');
-  var res = await http
-      .get('https://api.nlsc.gov.tw/other/TownVillagePointQuery/$lon/$lat');
+Future<String> getCityWithGPS(Position position) async {
+  var lat = position.latitude;
+  var lon = position.longitude;
 
-  if (res.statusCode == 200) {
-    // The raw data is Big5
-    var data = Utf8Decoder().convert(res.bodyBytes);
-    RegExp exp = new RegExp("<ctyName>(.*?)</ctyName>");
-    String city = exp.firstMatch(data).group(1);
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString("city", city);
-    print("getCityWithGPS() $city");
-    return city;
-  }
-  return "";
-}
+  // sometimes nlcs server will return 500
+  for (int i = 0; i < 5; i++) {
+    var res = await http.get(
+        Uri.https('api.nlsc.gov.tw', '/other/TownVillagePointQuery/$lon/$lat'));
+    print(Uri.https('api.nlsc.gov.tw', '/other/TownVillagePointQuery/$lon/$lat')
+        .toString());
 
-Future<List> loadAllStation() async {
-  var ret = List();
-  await rootBundle.loadString('assets/json/station.json').then((rawData) {
-    var data = jsonDecode(rawData);
-    for (var i = 0; i < data.length; i++) {
-      ret.add(data[i]['locationName']);
+    if (res.statusCode == 200) {
+      // The raw data is Big5
+      var data = Utf8Decoder().convert(res.bodyBytes);
+      RegExp exp = new RegExp("<ctyName>(.*?)</ctyName>");
+      String city = exp.firstMatch(data).group(1);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString("city", city);
+      return city;
     }
-  });
-  return ret;
-}
-
-Future<bool> isAutoRelocation() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  // 預設是自動定位
-  return prefs.get("autoRelocation") ?? true;
-}
-
-Future<bool> toggleAutoRelocation() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isAutoRelocation = prefs.get("autoRelocation") ?? true;
-  if (isAutoRelocation) {
-    prefs.setBool("autoRelocation", false);
-    return false;
   }
 
-  prefs.setBool("autoRelocation", true);
-  return true;
+  throw NLCSAPIError();
 }
 
 Future<Location> getStationAndCity() async {
-  bool autoRelocation = await isAutoRelocation();
-  var prefs = await SharedPreferences.getInstance();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
   var city = prefs.getString("city");
   var station = prefs.getString("station");
 
-  if (city == '' || station == '' || autoRelocation) {
-    // 沒有快取，重新取得城市及測站
-    var position = await getPosition();
-    station = await getStationWithGPS(position.latitude, position.longitude);
-    city = await getCityWithGPS(position.latitude, position.longitude);
+  if (city != '' && station != '') {
+    // use cache
+    return Location(
+      station: station,
+      city: city,
+    );
   }
-  // 使用快取
-  return Location(
-    station: station,
-    city: city,
-  );
+
+  // no cache, get city and station
+  return _getPosition().then((position) async {
+    station = await getStationWithGPS(position);
+    try {
+      city = await getCityWithGPS(position);
+      return Future.value(Location(
+        station: station,
+        city: city,
+      ));
+    } catch (e) {
+      throw e;
+    }
+  });
 }

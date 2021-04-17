@@ -1,8 +1,9 @@
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 import './time.dart' as time;
+import './err.dart';
 
-var _authorization = 'CWB-4265762E-BC4C-49FE-901B-EABE576583F6';
+const _authorization = 'CWB-4265762E-BC4C-49FE-901B-EABE576583F6';
 
 // 中央氣象局開放資料平臺之資料擷取API
 // https://opendata.cwb.gov.tw/dist/opendata-swagger.html
@@ -10,7 +11,7 @@ var _authorization = 'CWB-4265762E-BC4C-49FE-901B-EABE576583F6';
 // weather icon
 // https://erikflowers.github.io/weather-icons/
 
-var _cwbWxCodeToIconCode = {
+const _cwbWxCodeToIconCode = {
   "1": "wi-day-sunny", // 晴天
   "2": "wi-day-cloudy", // 晴時多雲
   "3": "wi-day-cloudy", // 多雲時晴
@@ -90,7 +91,7 @@ String cwdCurrentWeatherToIconCode(String weather) {
   RegExp mai = new RegExp(".*[霾]\\S?");
   RegExp bao = new RegExp(".*[雹]\$");
 
-  var prefix = "陰";
+  String prefix = "陰";
   if (qing.hasMatch(weather)) {
     prefix = "晴";
   } else if (duoyun.hasMatch(weather)) {
@@ -98,7 +99,7 @@ String cwdCurrentWeatherToIconCode(String weather) {
   }
   // print(prefix);
 
-  var ret = 'wi-na';
+  String ret = 'wi-na';
   if (prefix == '晴') {
     if (xue_bing.hasMatch(weather)) {
       ret = 'wi-day-snow';
@@ -147,16 +148,18 @@ String cwdCurrentWeatherToIconCode(String weather) {
 }
 
 Future<dynamic> getForecastWeather(city) async {
-  var url =
-      "https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=$_authorization&locationName=$city";
-  var response = await http.get(url);
+  var response = await http.get(
+      Uri.https('opendata.cwb.gov.tw', '/api/v1/rest/datastore/F-C0032-001',
+          {'Authorization': _authorization, 'locationName': city}),
+      headers: {'accept': 'application/json'});
+  // add accept:application/json to prevent getting SocketException() after building
   if (response.statusCode == 200) {
     var jsonResponse = convert.jsonDecode(response.body);
     if (jsonResponse["success"] == "true") {
-      var retList = [];
+      List retList = [];
       var parameter = jsonResponse["records"]["location"][0]["weatherElement"];
-      for (var j = 0; j < 3; j++) {
-        var ret = new Map();
+      for (int j = 0; j < 3; j++) {
+        Map ret = {};
         ret["startTime"] = parameter[0]["time"][j]["startTime"];
         ret["endTime"] = parameter[0]["time"][j]["endTime"];
         for (var i = 0; i < parameter.length; i++) {
@@ -172,10 +175,10 @@ Future<dynamic> getForecastWeather(city) async {
 }
 
 Future<dynamic> getCurrentWeather(station) async {
-  var url =
-      "https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${_authorization}&locationName=${station}";
-  var response = await http.get(url);
-  print(url);
+  var response = await http.get(Uri.https(
+      'opendata.cwb.gov.tw',
+      '/api/v1/rest/datastore/O-A0003-001',
+      {'Authorization': _authorization, 'locationName': station}));
   if (response.statusCode == 200) {
     var jsonResponse = convert.jsonDecode(response.body);
     try {
@@ -183,7 +186,7 @@ Future<dynamic> getCurrentWeather(station) async {
         var weatherElement =
             jsonResponse["records"]["location"][0]["weatherElement"];
         var len = weatherElement.length;
-        var ret = new Map();
+        var ret = {};
         for (var i = 0; i < len; i++) {
           ret[weatherElement[i]["elementName"]] =
               weatherElement[i]["elementValue"] as String;
@@ -191,8 +194,8 @@ Future<dynamic> getCurrentWeather(station) async {
         return ret;
       }
     } catch (e) {
-      return null;
+      throw e;
     }
   }
-  return null;
+  throw NetworkError(response.statusCode);
 }
