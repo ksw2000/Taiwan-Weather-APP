@@ -26,10 +26,6 @@ class NetworkError implements Exception {
   String errMsg() => 'NetworkError: $statusCode';
 }
 
-class CWBAPIError implements Exception {
-  String errMsg() => '中央氣象局 API 錯誤';
-}
-
 class NLCSAPIError implements Exception {
   String erMsg() => '國土測繪圖資服務雲 API 錯誤';
 }
