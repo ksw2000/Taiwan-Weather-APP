@@ -24,23 +24,14 @@ class NowPage extends StatefulWidget {
 
 class _NowPageState extends State<NowPage> {
   Future<WeatherCurrentInfo> _getCurrentWeather() async {
-    String temp, humd, weather, code;
-    return loc.getStationAndCity().then((current) {
-      return wea.getCurrentWeather(current.station).then((map) {
-        temp = sprintf("%.1f", [double.parse(map['TEMP'])]);
-        humd = map['HUMD'];
-        // 中央氣象局有時會出錯噴 -99
-        // 這時可以保留原值或採用離預報最近的值
-        if (map['Weather'] != '-99') {
-          weather = map['Weather'];
-          code = wea.cwdCurrentWeatherToIconCode(weather);
-          print("weather $weather, code $code");
-          return Future.value(WeatherCurrentInfo(
-              temp: temp, humd: humd, weather: weather, code: code));
-        }
-        throw CWBAPIError();
-      });
-    });
+    loc.Location current = await loc.getStationAndCity();
+    var map = await wea.getCurrentWeather(current.station);
+    // 中央氣象局有時會出錯噴 -99
+    return Future.value(WeatherCurrentInfo(
+        temp: sprintf("%.1f", [double.parse(map['TEMP'])]),
+        humd: map['HUMD'],
+        weather: map['Weather'] == '-99' ? '暫無數據' : map['Weather'],
+        code: wea.cwdCurrentWeatherToIconCode(map['Weather'])));
   }
 
   @override

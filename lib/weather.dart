@@ -64,6 +64,9 @@ String cwbWxCodeToIconCode(wx, [String t]) {
 }
 
 String cwdCurrentWeatherToIconCode(String weather) {
+  if (weather == '-99') {
+    return 'wi-na';
+  }
 /*
 * 晴、多雲、陰
 * x
