@@ -56,11 +56,11 @@ const _cwbWxCodeToIconCode = {
   "42": "wi-snow" // 下雪
 };
 
-String cwbWxCodeToIconCode(wx, [String t]) {
+String cwbWxCodeToIconCode(wx, [String? t]) {
   if (time.isNight(t)) {
-    return _cwbWxCodeToIconCode[wx].replaceAll('day', 'night');
+    return _cwbWxCodeToIconCode[wx]!.replaceAll('day', 'night');
   }
-  return _cwbWxCodeToIconCode[wx];
+  return _cwbWxCodeToIconCode[wx]!;
 }
 
 String cwdCurrentWeatherToIconCode(String weather) {
@@ -86,11 +86,11 @@ String cwdCurrentWeatherToIconCode(String weather) {
 * */
   RegExp qing = new RegExp("^晴.*");
   RegExp duoyun = new RegExp("^多雲.*");
-  RegExp xue_bing = new RegExp(".*[雪冰]\\S?");
+  RegExp xueBing = new RegExp(".*[雪冰]\\S?");
   RegExp shandian = new RegExp(".*[(有閃電)(有雷聲)(有雷)]\$");
   RegExp rei = new RegExp(".*[雷]\\S?");
   RegExp yu = new RegExp(".*[雨]\$");
-  RegExp ai_u = new RegExp(".*[靄霧]\\S?");
+  RegExp aiU = new RegExp(".*[靄霧]\\S?");
   RegExp mai = new RegExp(".*[霾]\\S?");
   RegExp bao = new RegExp(".*[雹]\$");
 
@@ -104,7 +104,7 @@ String cwdCurrentWeatherToIconCode(String weather) {
 
   String ret = 'wi-na';
   if (prefix == '晴') {
-    if (xue_bing.hasMatch(weather)) {
+    if (xueBing.hasMatch(weather)) {
       ret = 'wi-day-snow';
     } else if (shandian.hasMatch(weather)) {
       ret = 'wi-day-lightning';
@@ -112,7 +112,7 @@ String cwdCurrentWeatherToIconCode(String weather) {
       ret = 'wi-day-thunderstorm';
     } else if (yu.hasMatch(weather)) {
       ret = 'wi-day-rain';
-    } else if (ai_u.hasMatch(weather)) {
+    } else if (aiU.hasMatch(weather)) {
       ret = 'wi-day-fog';
     } else if (mai.hasMatch(weather)) {
       ret = 'wi-day-haze';
@@ -122,7 +122,7 @@ String cwdCurrentWeatherToIconCode(String weather) {
       ret = 'wi-day-sunny';
     }
   } else if (prefix == '多雲' || prefix == '陰') {
-    if (xue_bing.hasMatch(weather)) {
+    if (xueBing.hasMatch(weather)) {
       ret = 'wi-snow';
     } else if (shandian.hasMatch(weather)) {
       ret = 'wi-lightning';
@@ -130,7 +130,7 @@ String cwdCurrentWeatherToIconCode(String weather) {
       ret = 'wi-thunderstorm';
     } else if (yu.hasMatch(weather)) {
       ret = 'wi-rain';
-    } else if (ai_u.hasMatch(weather)) {
+    } else if (aiU.hasMatch(weather)) {
       ret = 'wi-fog';
     } else if (mai.hasMatch(weather)) {
       ret = 'wi-dust';
@@ -177,7 +177,7 @@ Future<dynamic> getForecastWeather(city) async {
   return null;
 }
 
-Future<dynamic> getCurrentWeather(station) async {
+Future<Map> getCurrentWeather(station) async {
   var response = await http.get(Uri.https(
       'opendata.cwb.gov.tw',
       '/api/v1/rest/datastore/O-A0003-001',
@@ -189,7 +189,7 @@ Future<dynamic> getCurrentWeather(station) async {
         var weatherElement =
             jsonResponse["records"]["location"][0]["weatherElement"];
         var len = weatherElement.length;
-        var ret = {};
+        Map ret = {};
         for (var i = 0; i < len; i++) {
           ret[weatherElement[i]["elementName"]] =
               weatherElement[i]["elementValue"] as String;

@@ -14,12 +14,7 @@ String cwbDateFormatter(String date) {
   return ret;
 }
 
-bool isNight([String t]) {
-  int hour;
-  hour = t == null ? new DateTime.now().hour : DateTime.parse(t).hour;
-
-  if (hour < 6 || hour >= 18) {
-    return true;
-  }
-  return false;
+bool isNight([String? t]) {
+  int hour = t == null ? new DateTime.now().hour : DateTime.parse(t).hour;
+  return hour < 6 || hour >= 18;
 }

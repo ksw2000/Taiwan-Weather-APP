@@ -7,9 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import './err.dart';
 
 class Location {
-  Location({this.city, this.station});
+  Location({required this.city, required this.stationList});
   final String city;
-  final String station;
+  final List<String> stationList;
+}
+
+class Station {
+  Station({required this.station, required this.distance});
+  String station;
+  double distance;
 }
 
 // 單點坐標回傳行政區
@@ -39,29 +45,39 @@ Future<Position> _getPosition() async {
   return Future.value(await Geolocator.getCurrentPosition());
 }
 
-Future<String> getStationWithGPS(Position position) async {
+Future<List<String>> getStationListByGPS(Position position) async {
   var lon = position.longitude;
   var lat = position.latitude;
-  var minDistance = double.maxFinite;
   var ret = "";
 
   var rawData = await rootBundle.loadString('assets/json/station.json');
   var data = jsonDecode(rawData);
+
+  // 距離由小到大排序
+  List<Station> stationList = [];
+
   for (var i = 0; i < data.length; i++) {
     var _lat = num.parse(data[i]["lat"]);
     var _lon = num.parse(data[i]["lon"]);
-    var dis = (lat - _lat) * (lat - _lat) + (lon - _lon) * (lon - _lon);
-    if (dis < minDistance) {
-      minDistance = dis;
-      ret = data[i]["locationName"];
-    }
+    var _dis = (lat - _lat) * (lat - _lat) + (lon - _lon) * (lon - _lon);
+    stationList.add(Station(station: data[i]["locationName"], distance: _dis));
   }
 
+  stationList.sort((a, b) {
+    return (a.distance > b.distance) ? 1 : -1;
+  });
+
+  List<String> stationStringList = [];
+
+  stationList.forEach((element) {
+    stationStringList.add(element.station);
+  });
+
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  prefs.setString("station", ret);
+  prefs.setStringList("stations", stationStringList);
 
   print("getStationWithGPS() $ret");
-  return ret;
+  return stationStringList;
 }
 
 Future<String> getCityWithGPS(Position position) async {
@@ -78,8 +94,8 @@ Future<String> getCityWithGPS(Position position) async {
     if (res.statusCode == 200) {
       // The raw data is Big5
       var data = Utf8Decoder().convert(res.bodyBytes);
-      RegExp exp = new RegExp("<ctyName>(.*?)</ctyName>");
-      String city = exp.firstMatch(data).group(1);
+      String city =
+          RegExp("<ctyName>(.*?)</ctyName>").firstMatch(data)!.group(1)!;
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString("city", city);
       return city;
@@ -91,28 +107,24 @@ Future<String> getCityWithGPS(Position position) async {
 
 Future<Location> getStationAndCity() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  var city = prefs.getString("city");
-  var station = prefs.getString("station");
+  String? city = prefs.getString("city");
+  List<String>? stationStringList = prefs.getStringList("stations");
 
-  if (city != '' && station != '') {
+  if (city != null && stationStringList != null) {
     // use cache
     return Location(
-      station: station,
       city: city,
+      stationList: stationStringList,
     );
   }
 
   // no cache, get city and station
   return _getPosition().then((position) async {
-    station = await getStationWithGPS(position);
-    try {
-      city = await getCityWithGPS(position);
-      return Future.value(Location(
-        station: station,
-        city: city,
-      ));
-    } catch (e) {
-      throw e;
-    }
+    city = await getCityWithGPS(position);
+    List<String> stationList = await getStationListByGPS(position);
+    return Future.value(Location(
+      city: city ?? "",
+      stationList: stationList,
+    ));
   });
 }

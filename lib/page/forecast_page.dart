@@ -2,14 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:taiwan_weather/err.dart';
 import 'package:weather_icons/weather_icons.dart';
-import '../location.dart' as loc;
-import '../time.dart' as time;
-import '../weather.dart' as wea;
+import '../location.dart';
+import '../time.dart';
+import '../weather.dart';
 
 class WeatherForecastInfo {
   WeatherForecastInfo(
-      {@required this.start,
-      @required this.end,
+      {required this.start,
+      required this.end,
       this.wx = '',
       this.code = 'wi-na',
       this.minT = '0',
@@ -29,25 +29,18 @@ class ForecastPage extends StatefulWidget {
 }
 
 class _ForecastPageState extends State<ForecastPage> {
-  Future<List<WeatherForecastInfo>> _getForecastWeather() async {
-    List<WeatherForecastInfo> list = [];
-    return loc.getStationAndCity().then((current) {
-      return wea.getForecastWeather(current.city).then((map) {
-        map.forEach((e) {
-          list.add(WeatherForecastInfo(
-            start: time.cwbDateFormatter(e['startTime']),
-            end: time.cwbDateFormatter(e['endTime']),
-            wx: e['Wx']['parameterName'],
-            code: wea.cwbWxCodeToIconCode(
-                e['Wx']['parameterValue'], e['startTime']),
-            minT: e['MinT']['parameterName'],
-            maxT: e['MaxT']['parameterName'],
-            pop: e['PoP']['parameterName'],
-          ));
-        });
-        return list;
-      });
-    });
+  ScrollController? scrollCtrl;
+
+  @override
+  void initState() {
+    scrollCtrl = ScrollController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollCtrl?.dispose();
+    super.dispose();
   }
 
   @override
@@ -57,24 +50,51 @@ class _ForecastPageState extends State<ForecastPage> {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Error(snapshot.error.toString());
-          } else if (snapshot.hasData) {
+          } else if (snapshot.hasData && snapshot.data != null) {
+            dynamic data = snapshot.data;
             List<Widget> forecastElementList = [];
-            snapshot.data?.forEach((e) {
+            data.forEach((e) {
               forecastElementList.add(ForecastElement(e));
             });
 
-            return Padding(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            return Scrollbar(
+                isAlwaysShown: true,
+                controller: scrollCtrl,
                 child: SingleChildScrollView(
-                    child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: forecastElementList,
-                )));
+                    controller: scrollCtrl,
+                    child: Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: forecastElementList,
+                        ))));
           } else {
             return Center(child: CircularProgressIndicator());
           }
         });
+  }
+
+  Future<List<WeatherForecastInfo>> _getForecastWeather() async {
+    List<WeatherForecastInfo> list = [];
+    return getStationAndCity().then((current) {
+      return getForecastWeather(current.city).then((map) {
+        map.forEach((e) {
+          list.add(WeatherForecastInfo(
+            start: cwbDateFormatter(e['startTime']),
+            end: cwbDateFormatter(e['endTime']),
+            wx: e['Wx']['parameterName'],
+            code:
+                cwbWxCodeToIconCode(e['Wx']['parameterValue'], e['startTime']),
+            minT: e['MinT']['parameterName'],
+            maxT: e['MaxT']['parameterName'],
+            pop: e['PoP']['parameterName'],
+          ));
+        });
+        return list;
+      });
+    });
   }
 }
 

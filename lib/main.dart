@@ -21,8 +21,8 @@ class App extends StatelessWidget {
 }
 
 class Home extends StatefulWidget {
-  Home({Key key, this.title}) : super(key: key);
-  final String title;
+  Home({Key? key, this.title}) : super(key: key);
+  final String? title;
 
   @override
   _HomeState createState() => _HomeState();
@@ -36,7 +36,7 @@ class _HomeState extends State<Home> {
             length: 2,
             child: Scaffold(
                 appBar: AppBar(
-                  title: Text(widget.title),
+                  title: Text(widget.title ?? ''),
                   bottom: TabBar(tabs: [
                     Tab(
                       text: '現在',
