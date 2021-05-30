@@ -20,12 +20,12 @@ class Error extends StatelessWidget {
   }
 }
 
-class NetworkError implements Exception {
-  NetworkError(this.statusCode);
+class ErrorNetwork implements Exception {
+  ErrorNetwork(this.statusCode);
   final int statusCode;
-  String errMsg() => 'NetworkError: $statusCode';
+  String errMsg() => 'ErrorNetwork: $statusCode';
 }
 
-class NLCSAPIError implements Exception {
+class ErrorNLCSAPIError implements Exception {
   String erMsg() => '國土測繪圖資服務雲 API 錯誤';
 }

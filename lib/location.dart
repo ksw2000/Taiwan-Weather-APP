@@ -45,7 +45,7 @@ Future<Position> _getPosition() async {
   return Future.value(await Geolocator.getCurrentPosition());
 }
 
-Future<List<String>> getStationListByGPS(Position position) async {
+Future<List<String>> _getStationListByGPS(Position position) async {
   var lon = position.longitude;
   var lat = position.latitude;
   var ret = "";
@@ -80,7 +80,7 @@ Future<List<String>> getStationListByGPS(Position position) async {
   return stationStringList;
 }
 
-Future<String> getCityWithGPS(Position position) async {
+Future<String> _getCityWithGPS(Position position) async {
   var lat = position.latitude;
   var lon = position.longitude;
 
@@ -102,7 +102,7 @@ Future<String> getCityWithGPS(Position position) async {
     }
   }
 
-  throw NLCSAPIError();
+  throw ErrorNLCSAPIError();
 }
 
 Future<Location> getStationAndCity() async {
@@ -120,8 +120,8 @@ Future<Location> getStationAndCity() async {
 
   // no cache, get city and station
   return _getPosition().then((position) async {
-    city = await getCityWithGPS(position);
-    List<String> stationList = await getStationListByGPS(position);
+    city = await _getCityWithGPS(position);
+    List<String> stationList = await _getStationListByGPS(position);
     return Future.value(Location(
       city: city ?? "",
       stationList: stationList,
