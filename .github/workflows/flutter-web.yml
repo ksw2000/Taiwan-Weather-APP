@@ -29,7 +29,7 @@ jobs:
           git init
           git config user.name  "CI"
           git config user.email "flutter-ci@github.com"
-          git remote add secure-origin https://${{ GITHUB_TOKEN }}@github.com/liao2000/${{ github.event.repository.name }}.git
+          git remote add origin https://github.com/liao2000/Taiwan-Weather-APP.git
           git checkout -b gh-pages
           git add .
           git commit -m "Updated docs"
