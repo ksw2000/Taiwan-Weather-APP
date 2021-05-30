@@ -1,21 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:weather_icons/weather_icons.dart';
-import 'package:sprintf/sprintf.dart';
 import '../err.dart';
 import '../location.dart';
 import '../weather.dart';
 
 class WeatherCurrentInfo {
   WeatherCurrentInfo(
-      {this.temp = '0',
+      {this.temp = 0,
       this.station = '',
-      this.humd = '0',
+      this.humd = 0,
+      this.r24 = 0, //日累積雨量
       this.weather = '',
       this.code = 'wi-na'});
   final String station;
-  final String temp;
-  final String humd;
+  final double temp;
+  final double humd;
+  final double r24;
   final String weather;
   final String code;
 }
@@ -28,26 +29,28 @@ class _NowPageState extends State<NowPage> {
   Future<WeatherCurrentInfo> _getCurrentWeather() async {
     Location current = await getStationAndCity();
     Map info = {};
+
     for (int i = 0; i < current.stationList.length; i++) {
       var station = current.stationList[i];
       info = await getCurrentWeather(station);
-
+      print(info);
       if (info['Weather'] != '-99') {
         return Future.value(WeatherCurrentInfo(
-            temp: sprintf("%.1f", [double.parse(info['TEMP'])]),
+            temp: double.parse(info['TEMP']),
             station: current.stationList[i],
-            humd: info['HUMD'],
+            humd: double.parse(info['HUMD']),
+            r24: double.parse(info['24R']),
             weather: info['Weather'],
             code: cwdCurrentWeatherToIconCode(info['Weather'])));
       }
     }
 
-    info = await getCurrentWeather(current.stationList[0]);
     return Future.value(WeatherCurrentInfo(
-        temp: sprintf("%.1f", [double.parse(info['TEMP'])]),
+        temp: .0,
         station: current.stationList[0],
-        humd: info['HUMD'],
-        weather: '暫無數據',
+        humd: .0,
+        r24: .0,
+        weather: info['Weather'],
         code: cwdCurrentWeatherToIconCode(info['Weather'])));
   }
 
@@ -100,9 +103,15 @@ class _NowPageState extends State<NowPage> {
                                 style: TextStyle(fontSize: 20),
                               ),
                               Text(
-                                '溼度：${(double.parse(data.humd) * 100).round()} %',
+                                '溼度：${(data.humd * 100).toStringAsFixed(1)} %',
                                 style: TextStyle(fontSize: 20),
                               ),
+                              (data.r24 != '0')
+                                  ? Text(
+                                      '累積雨量：${(data.r24).toStringAsFixed(1)} mm',
+                                      style: TextStyle(fontSize: 20),
+                                    )
+                                  : Container(),
                               SizedBox(
                                 height: 10,
                               ),

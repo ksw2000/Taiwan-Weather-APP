@@ -3,25 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:taiwan_weather/err.dart';
 import 'package:weather_icons/weather_icons.dart';
 import '../location.dart';
-import '../time.dart';
 import '../weather.dart';
 
 class WeatherForecastInfo {
   WeatherForecastInfo(
       {required this.start,
       required this.end,
-      this.wx = '',
-      this.code = 'wi-na',
-      this.minT = '0',
-      this.maxT = '0',
-      this.pop = '0'});
+      this.wx = '', // 天氣型態
+      this.wx2 = '', // 比較簡短的天氣型態
+      this.code = 'wi-na', // weather icon
+      this.minT = 0,
+      this.maxT = 0,
+      this.pop = 0});
   final String start;
   final String end;
   final String wx;
+  final String wx2;
   final String code;
-  final String minT;
-  final String maxT;
-  final String pop;
+  final double minT;
+  final double maxT;
+  final double pop;
 }
 
 class ForecastPage extends StatefulWidget {
@@ -82,19 +83,32 @@ class _ForecastPageState extends State<ForecastPage> {
       return getForecastWeather(current.city).then((map) {
         map.forEach((e) {
           list.add(WeatherForecastInfo(
-            start: cwbDateFormatter(e['startTime']),
-            end: cwbDateFormatter(e['endTime']),
+            start: _cwbDateFormatter(e['startTime']),
+            end: _cwbDateFormatter(e['endTime']),
             wx: e['Wx']['parameterName'],
+            wx2: cwbWxCodeToWeather(e['Wx']['parameterValue']),
             code:
                 cwbWxCodeToIconCode(e['Wx']['parameterValue'], e['startTime']),
-            minT: e['MinT']['parameterName'],
-            maxT: e['MaxT']['parameterName'],
-            pop: e['PoP']['parameterName'],
+            minT: double.parse(e['MinT']['parameterName']),
+            maxT: double.parse(e['MaxT']['parameterName']),
+            pop: double.parse(e['PoP']['parameterName']),
           ));
         });
         return list;
       });
     });
+  }
+
+  String _cwbDateFormatter(String date) {
+    var t = DateTime.parse(date);
+    var ret = t.month.toString().padLeft(2, "0");
+    ret += '/';
+    ret += t.day.toString().padLeft(2, "0");
+    ret += ' ';
+    ret += t.hour.toString().padLeft(2, "0");
+    ret += ':';
+    ret += t.minute.toString().padLeft(2, "0");
+    return ret;
   }
 }
 
@@ -114,15 +128,19 @@ class ForecastElement extends StatelessWidget {
             ),
             Spacer(),
             Column(
-              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Text(
                   '${info.start} ~ ${info.end}',
                   style: TextStyle(fontSize: 15, color: Colors.blueGrey),
                 ),
                 Text(
-                  "${info.wx}",
-                  style: TextStyle(fontSize: 25),
+                  "${info.wx2}",
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 20,
+                  ),
                 ),
                 Text(
                   "${info.minT}°C - ${info.maxT}°C 降雨率：${info.pop}%",
