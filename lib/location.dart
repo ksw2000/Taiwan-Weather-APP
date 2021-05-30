@@ -1,10 +1,10 @@
 import 'dart:async' show Future;
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import './err.dart';
+import 'err.dart';
+import 'station.dart';
 
 class Location {
   Location({required this.city, required this.stationList});
@@ -49,18 +49,15 @@ Future<List<String>> _getStationListByGPS(Position position) async {
   var lon = position.longitude;
   var lat = position.latitude;
   var ret = "";
-
-  var rawData = await rootBundle.loadString('assets/json/station.json');
-  var data = jsonDecode(rawData);
-
   // 距離由小到大排序
   List<Station> stationList = [];
 
-  for (var i = 0; i < data.length; i++) {
-    var _lat = num.parse(data[i]["lat"]);
-    var _lon = num.parse(data[i]["lon"]);
+  for (var i = 0; i < stationData.length; i++) {
+    var _lat = num.parse(stationData[i]["lat"]!);
+    var _lon = num.parse(stationData[i]["lon"]!);
     var _dis = (lat - _lat) * (lat - _lat) + (lon - _lon) * (lon - _lon);
-    stationList.add(Station(station: data[i]["locationName"], distance: _dis));
+    stationList
+        .add(Station(station: stationData[i]["locationName"]!, distance: _dis));
   }
 
   stationList.sort((a, b) {

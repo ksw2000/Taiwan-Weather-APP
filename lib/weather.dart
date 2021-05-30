@@ -1,6 +1,6 @@
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
-import './err.dart';
+import 'err.dart';
 
 const _authorization = 'CWB-4265762E-BC4C-49FE-901B-EABE576583F6';
 
