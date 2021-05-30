@@ -54,9 +54,20 @@ class _ForecastPageState extends State<ForecastPage> {
           } else if (snapshot.hasData && snapshot.data != null) {
             dynamic data = snapshot.data;
             List<Widget> forecastElementList = [];
-            data.forEach((e) {
+            forecastElementList.add(SizedBox(
+              height: 10,
+            ));
+            data["infoList"].forEach((e) {
               forecastElementList.add(ForecastElement(e));
             });
+
+            forecastElementList.addAll([
+              SizedBox(height: 10),
+              Text(
+                "來自${data["city"]}測站",
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              )
+            ]);
 
             return Scrollbar(
                 isAlwaysShown: true,
@@ -77,7 +88,7 @@ class _ForecastPageState extends State<ForecastPage> {
         });
   }
 
-  Future<List<WeatherForecastInfo>> _getForecastWeather() async {
+  Future<Map> _getForecastWeather() async {
     List<WeatherForecastInfo> list = [];
     return getStationAndCity().then((current) {
       return getForecastWeather(current.city).then((map) {
@@ -94,7 +105,7 @@ class _ForecastPageState extends State<ForecastPage> {
             pop: double.parse(e['PoP']['parameterName']),
           ));
         });
-        return list;
+        return {"city": current.city, "infoList": list};
       });
     });
   }
@@ -119,37 +130,40 @@ class ForecastElement extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
         elevation: 12,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-          child: Row(children: [
-            BoxedIcon(
-              WeatherIcons.fromString(info.code),
-              size: 55,
-            ),
-            Spacer(),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Text(
-                  '${info.start} ~ ${info.end}',
-                  style: TextStyle(fontSize: 15, color: Colors.blueGrey),
+        child: Container(
+            constraints: BoxConstraints(maxWidth: 500),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+              child: Row(children: [
+                BoxedIcon(
+                  WeatherIcons.fromString(info.code),
+                  size: 55,
                 ),
-                Text(
-                  "${info.wx2}",
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 20,
-                  ),
+                Spacer(),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Text(
+                      '${info.start} ~ ${info.end}',
+                      style: TextStyle(fontSize: 15, color: Colors.blueGrey),
+                    ),
+                    Text(
+                      "${info.wx2}",
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 20,
+                      ),
+                    ),
+                    Text(
+                      "${info.minT}°C - ${info.maxT}°C 降雨率：${info.pop}%",
+                      style: TextStyle(fontSize: 15, color: Colors.blueGrey),
+                    ),
+                  ],
                 ),
-                Text(
-                  "${info.minT}°C - ${info.maxT}°C 降雨率：${info.pop}%",
-                  style: TextStyle(fontSize: 15, color: Colors.blueGrey),
-                ),
-              ],
-            ),
-            Spacer(),
-          ]),
-        ));
+                Spacer(),
+              ]),
+            )));
   }
 }
