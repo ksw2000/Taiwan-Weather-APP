@@ -16,7 +16,7 @@ class App extends StatelessWidget {
           primarySwatch: Colors.blueGrey,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: Home(title: '台灣天氣'));
+        home: Home(title: '我在台灣天氣晴'));
   }
 }
 
